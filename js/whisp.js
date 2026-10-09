@@ -21,9 +21,12 @@
 //              Then open this HTML from the same machine.
 //              Use this for the full live integration.
 //
-const WHISP_MODE    = 'local';          // ← change to 'proxy' or 'local'
-let WHISP_MODE_CURRENT = WHISP_MODE; // overrideable at runtime via UI
-const WHISP_LOCAL   = 'http://127.0.0.1:5050'; // local Python server port
+const WHISP_MODE = 'api';   // 'mock', 'proxy', 'local', or 'api'
+let WHISP_MODE_CURRENT = WHISP_MODE;
+
+const WHISP_LOCAL = 'http://127.0.0.1:5050';
+//AWS API Gateway endpoint for whisp serverless backend. It triggers a (lambda function)
+const WHISP_API = 'https://lpj8wzc0mb.execute-api.eu-north-1.amazonaws.com';
 
 // ── Real Quindío mock data derived from coffee_ex.geojson WHISP output ──────
 // These values reflect an actual WHISP analysis for the Cultivo Permanente
@@ -98,8 +101,16 @@ async function sendToWhisp(plot){
         geojsonData = await pollWhispProxy(token);
       }
 
-} else if (WHISP_MODE_CURRENT === 'local') {
-  const response = await fetch('/api/whisp/analyze', {
+} else if (
+  WHISP_MODE_CURRENT === 'local' ||
+  WHISP_MODE_CURRENT === 'api'
+) {
+  const endpoint =
+    WHISP_MODE_CURRENT === 'local'
+      ? `${WHISP_LOCAL}/api/whisp/analyze`
+      : `${WHISP_API}/api/whisp/analyze`;
+
+  const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -167,8 +178,8 @@ function showWhispLoading(){
   document.getElementById('whisp-content').innerHTML = `
     <div class="whisp-loading">
       <div class="whisp-spinner"></div>
-      <div class="ws-label">Analizando con WHISP…</div>
-      <div class="ws-sub">Consultando Google Earth Engine.<br>Esto puede tomar hasta 60 segundos.</div>
+      <div class="ws-label">Analizando la parcela…</div>
+      <div class="ws-sub">Esto puede tomar hasta 60 segundos.</div>
       <div style="margin-top:16px;font-size:11px;color:var(--stone);text-align:center">
         Modo: <code style="background:var(--fog);padding:2px 6px;border-radius:4px">${WHISP_MODE_CURRENT}</code>
       </div>
